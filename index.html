@@ -122,6 +122,8 @@
             const price = parseFloat(document.getElementById('itemPrice').value) || 0;
 
             if (name) {
+                console.log('הוספת מוצר:', name, price); // דיבאג
+                
                 items.push({
                     id: "id_" + Date.now(),
                     name: name,
@@ -130,9 +132,18 @@
                     price: price,
                     purchased: false
                 });
+                
+                console.log('מספר מוצרים אחרי הוספה:', items.length); // דיבאג
+                
                 saveItems();
+                
+                console.log('לפני renderItems'); // דיבאג
                 renderItems();
+                console.log('אחרי renderItems'); // דיבאג
+                
                 hideInputForm();
+            } else {
+                alert('נא להזין שם מוצר');
             }
         }
 
