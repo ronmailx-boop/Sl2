@@ -1,0 +1,32 @@
+{
+  "name": "רשימת קניות (Sl2)",
+  "short_name": "קניות Sl2",
+  "description": "אפליקציה לניהול רשימת קניות - גרסה Sl2",
+  "start_url": "/Sl2/",
+  "scope": "/Sl2/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4F46E5",
+  "orientation": "portrait",
+  "dir": "rtl",
+  "lang": "he",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081559.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081559.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["shopping", "lifestyle", "productivity"]
+}
+
+
+
+
