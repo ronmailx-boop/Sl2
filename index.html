@@ -169,10 +169,13 @@
             console.log('סה"כ מוצרים עכשיו:', items.length);
 
             saveItems();
-            renderItems();
-            hideInputForm();
             
-            console.log('סיימתי להוסיף מוצר');
+            // עיכוב קטן לפני render
+            setTimeout(() => {
+                renderItems();
+                hideInputForm();
+                console.log('סיימתי להוסיף מוצר');
+            }, 50);
         }
 
         function renderItems() {
@@ -181,16 +184,18 @@
             const list = document.getElementById('itemsList');
             const empty = document.getElementById('emptyState');
 
+            // ניקוי מלא לפני render
+            list.innerHTML = '';
+            list.style.display = 'none';
+
             if (!items || items.length === 0) {
                 empty.classList.remove('hidden');
-                list.innerHTML = '';
                 list.classList.add('hidden');
                 updateTotals();
                 return;
             }
 
             empty.classList.add('hidden');
-            list.classList.remove('hidden');
 
             let html = '';
             
@@ -237,6 +242,13 @@
             });
 
             list.innerHTML = html;
+            
+            // כפיית reflow
+            void list.offsetHeight;
+            
+            list.style.display = 'block';
+            list.classList.remove('hidden');
+            
             updateTotals();
             
             console.log('renderItems הסתיים. HTML אורך:', html.length);
