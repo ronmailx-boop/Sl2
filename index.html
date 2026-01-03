@@ -9,7 +9,8 @@
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-            padding-bottom: 150px;
+            /* הוספת ריווח בתחתית כדי שהכפתורים לא יסתירו את המחיר */
+            padding-bottom: 180px; 
         }
         .floating-btn {
             position: fixed !important;
@@ -18,7 +19,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             transition: all 0.2s;
         }
         .floating-btn:active { transform: scale(0.9); }
@@ -26,6 +27,12 @@
         .drag-handle { cursor: grab; display: none; }
         .edit-mode .drag-handle { display: flex; }
         #confirmDialog.active { display: flex !important; }
+        
+        /* עיצוב שורת הסיכום שתמיד תהיה גלויה */
+        #totalSection {
+            position: relative;
+            z-index: 10;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -38,7 +45,7 @@
                     </svg>
                     <h1 class="text-2xl font-bold text-gray-800">רשימת הקניות</h1>
                 </div>
-                <div id="lockStatusTag" class="text-xs font-bold px-2 py-1 rounded bg-gray-200 text-gray-600">גרירה נעולה</div>
+                <div id="lockStatusTag" class="text-xs font-bold px-2 py-1 rounded bg-gray-200 text-gray-600 transition-colors">גרירה נעולה</div>
             </div>
         </div>
 
@@ -53,32 +60,32 @@
             </div>
         </div>
 
-        <div class="bg-white shadow-lg p-6 min-h-[200px]">
+        <div class="bg-white shadow-lg p-6 min-h-[150px]">
             <div id="emptyState" class="text-center py-12 text-gray-400">
                 <p class="text-lg">הרשימה ריקה</p>
             </div>
             <div id="itemsList" class="space-y-4 hidden"></div>
         </div>
 
-        <div id="totalSection" class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-b-3xl shadow-lg p-6 text-white hidden">
+        <div id="totalSection" class="bg-gradient-to-r from-indigo-700 to-purple-700 rounded-b-3xl shadow-2xl p-6 text-white hidden">
             <div class="grid grid-cols-2 gap-4">
                 <div><p class="text-sm opacity-80">עדיין לקנות:</p><p class="text-2xl font-bold">₪<span id="remainingPrice">0.00</span></p></div>
-                <div class="text-left"><p class="text-sm opacity-80">סה"כ:</p><p class="text-2xl font-bold">₪<span id="totalPrice">0.00</span></p></div>
+                <div class="text-left"><p class="text-sm opacity-80">סה"כ לתשלום:</p><p class="text-2xl font-bold">₪<span id="totalPrice">0.00</span></p></div>
             </div>
         </div>
     </div>
 
-    <button onclick="showInputForm()" class="floating-btn bg-green-600 text-white rounded-full w-16 h-16" style="bottom: 24px; right: 24px;">
+    <button onclick="showInputForm()" class="floating-btn bg-green-600 text-white rounded-full w-16 h-16" style="bottom: 20px; right: 20px;">
         <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
     </button>
 
-    <button id="lockBtn" onclick="toggleLock()" class="floating-btn bg-blue-600 text-white rounded-full w-14 h-14" style="bottom: 28px; right: 100px;">
+    <button id="lockBtn" onclick="toggleLock()" class="floating-btn bg-blue-600 text-white rounded-full w-14 h-14" style="bottom: 25px; right: 95px;">
         <svg id="lockIcon" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
         </svg>
     </button>
 
-    <button id="clearAllBtn" onclick="clearAllItems()" class="floating-btn bg-red-500 text-white rounded-full w-12 h-12 hidden" style="bottom: 32px; right: 170px;">
+    <button id="clearAllBtn" onclick="clearAllItems()" class="floating-btn bg-red-500 text-white rounded-full w-12 h-12 hidden" style="bottom: 30px; right: 160px;">
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
     </button>
 
@@ -99,11 +106,10 @@
         function initSortable() {
             const el = document.getElementById('itemsList');
             if (window.sortableInstance) window.sortableInstance.destroy();
-            
             window.sortableInstance = Sortable.create(el, {
                 animation: 150,
-                handle: '.drag-handle', // גרירה רק דרך הידית
-                disabled: isLocked,    // מופעל/מושבת לפי המנעול
+                handle: '.drag-handle',
+                disabled: isLocked,
                 onEnd: function() {
                     let newOrder = [];
                     document.querySelectorAll('.item-card').forEach(card => {
@@ -127,15 +133,13 @@
             if (isLocked) {
                 btn.classList.replace('bg-orange-500', 'bg-blue-600');
                 tag.textContent = "גרירה נעולה";
-                tag.classList.replace('bg-orange-100', 'bg-gray-200');
-                tag.classList.replace('text-orange-600', 'text-gray-600');
+                tag.className = "text-xs font-bold px-2 py-1 rounded bg-gray-200 text-gray-600";
                 icon.innerHTML = '<path stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
                 list.classList.remove('edit-mode');
             } else {
                 btn.classList.replace('bg-blue-600', 'bg-orange-500');
                 tag.textContent = "מצב עריכה פעיל";
-                tag.classList.replace('bg-gray-200', 'bg-orange-100');
-                tag.classList.replace('text-gray-600', 'text-orange-600');
+                tag.className = "text-xs font-bold px-2 py-1 rounded bg-orange-100 text-orange-600";
                 icon.innerHTML = '<path stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2M5 21h14a2 2 0 002-2v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2z"></path>';
                 list.classList.add('edit-mode');
             }
@@ -195,9 +199,7 @@
                         <div class="drag-handle p-1 text-gray-400">
                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M7 7h2v2H7V7zm0 4h2v2H7v-2zm4-4h2v2h-2V7zm0 4h2v2h-2v-2zM7 3h2v2H7V3zm4 0h2v2h-2V3zm0 8h2v2h-2v-2zm0 4h2v2h-2v-2zM7 15h2v2H7v-2z"></path></svg>
                         </div>
-
                         <input type="checkbox" ${item.purchased ? 'checked' : ''} onchange="togglePurchased(${index})" class="w-6 h-6 mt-1">
-                        
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-start mb-1">
                                 <h3 class="font-bold text-lg truncate ${item.purchased ? 'line-through opacity-50' : ''}">${item.name}</h3>
@@ -205,17 +207,17 @@
                             </div>
                             <p class="text-xs text-gray-500 mb-3">${item.quantity} יח' × ₪${item.unitPrice.toFixed(2)}</p>
                             
-                            <div class="grid grid-cols-3 items-center border-t pt-3">
+                            <div class="grid grid-cols-3 items-center border-t pt-3 gap-2">
                                 <div></div>
                                 <div class="flex justify-center">
-                                    <div class="flex items-center gap-2 bg-gray-50 border rounded-lg px-2 py-1">
+                                    <div class="flex items-center gap-2 bg-gray-50 border rounded-lg px-2 py-1 shadow-inner">
                                         <button onclick="changeQty(${index}, -1)" class="text-red-500 font-bold text-xl px-2">-</button>
-                                        <span class="font-bold w-6 text-center">${item.quantity}</span>
+                                        <span class="font-bold w-6 text-center text-gray-800">${item.quantity}</span>
                                         <button onclick="changeQty(${index}, 1)" class="text-green-600 font-bold text-xl px-2">+</button>
                                     </div>
                                 </div>
-                                <div class="flex justify-end">
-                                    <button onclick="deleteItem(${index})" class="p-2 bg-red-500 text-white rounded-lg">
+                                <div class="flex justify-end pr-4">
+                                    <button onclick="deleteItem(${index})" class="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                     </button>
                                 </div>
