@@ -1,7 +1,7 @@
 {
-  "id": "/Sl2/",
-  "scope": "/Sl2/",
-  "start_url": "/Sl2/index.html",
+  "id": "https://ronmailx-boop.github.io/Sl2/",
+  "start_url": "https://ronmailx-boop.github.io/Sl2/index.html",
+  "scope": "https://ronmailx-boop.github.io/Sl2/",
   "name": "רשימת הקניות שלי",
   "short_name": "רשימת קניות",
   "description": "אפליקציה פשוטה ונוחה לניהול רשימת קניות, מעקב אחר מחירים וסידור מוצרים.",
