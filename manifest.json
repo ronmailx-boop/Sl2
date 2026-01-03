@@ -1,8 +1,10 @@
 {
+  "id": "/Sl2/",
+  "scope": "/Sl2/",
+  "start_url": "/Sl2/index.html",
   "name": "רשימת הקניות שלי",
   "short_name": "רשימת קניות",
   "description": "אפליקציה פשוטה ונוחה לניהול רשימת קניות, מעקב אחר מחירים וסידור מוצרים.",
-  "start_url": "/Sl2/",
   "display": "standalone",
   "background_color": "#f4f7fa",
   "theme_color": "#6366f1",
