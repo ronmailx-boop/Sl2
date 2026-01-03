@@ -14,8 +14,8 @@
             min-height: 100vh;
         }
         .drag-handle { cursor: grab; display: none; }
-        .edit-mode .drag-handle { display: block; }
-        .sortable-ghost { opacity: 0.2; }
+        .edit-mode .drag-handle { display: flex; }
+        .sortable-ghost { opacity: 0.2; background-color: #e0e7ff; }
         
         .bottom-bar {
             position: fixed;
@@ -23,7 +23,7 @@
             left: 0;
             right: 0;
             background: linear-gradient(to right, #4f46e5, #9333ea);
-            z-index: 100;
+            z-index: 1000;
             padding: 1rem;
             border-top-left-radius: 1.5rem;
             border-top-right-radius: 1.5rem;
@@ -45,17 +45,17 @@
                 <input type="text" id="itemName" placeholder="שם המוצר" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                 <input type="number" id="itemPrice" placeholder="מחיר ליחידה" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none">
                 <div class="flex gap-2 text-white">
-                    <button onclick="addItem()" class="flex-1 bg-green-600 py-3 rounded-lg font-bold shadow-md active:bg-green-700">הוסף מוצר</button>
+                    <button onclick="addItem()" class="flex-1 bg-green-600 py-3 rounded-lg font-bold shadow-md">הוסף מוצר</button>
                     <button onclick="hideInputForm()" class="flex-1 bg-gray-400 py-3 rounded-lg font-bold">ביטול</button>
                 </div>
             </div>
         </div>
 
         <div id="emptyState" class="bg-white p-12 text-center text-gray-400 rounded-b-xl shadow-sm">
-            הרשימה ריקה. לחץ על ה-+ הירוק למטה.
+            הרשימה ריקה.
         </div>
         
-        <div id="itemsList" class="space-y-3 mt-4 block"></div>
+        <div id="itemsList" class="space-y-3 mt-4"></div>
     </div>
 
     <div class="bottom-bar text-white">
@@ -87,29 +87,19 @@
         </div>
     </div>
 
-    <div id="confirmDialog" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[2000] p-4">
-        <div class="bg-white p-6 rounded-2xl w-full max-w-xs text-center">
-            <p class="text-xl font-bold mb-4">למחוק את כל הרשימה?</p>
-            <div class="flex gap-3">
-                <button onclick="confirmClearAll()" class="flex-1 bg-red-600 text-white py-3 rounded-lg font-bold">מחק</button>
-                <button onclick="cancelClearAll()" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg">ביטול</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         let items = [];
         let isLocked = true;
+        let sortableInstance = null;
 
-        // טעינה ורענון מיידי
         function loadItems() {
-            const saved = localStorage.getItem('shopping_final_v1');
+            const saved = localStorage.getItem('shopping_v8_lock');
             items = saved ? JSON.parse(saved) : [];
             renderItems();
         }
 
         function saveItems() {
-            localStorage.setItem('shopping_final_v1', JSON.stringify(items));
+            localStorage.setItem('shopping_v8_lock', JSON.stringify(items));
         }
 
         function showInputForm() {
@@ -122,30 +112,20 @@
         }
 
         function addItem() {
-            const nInput = document.getElementById('itemName');
-            const pInput = document.getElementById('itemPrice');
-            const name = nInput.value.trim();
-            const price = parseFloat(pInput.value) || 0;
+            const name = document.getElementById('itemName').value.trim();
+            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
 
             if (name) {
-                const newItem = {
-                    id: Date.now(),
-                    name: name,
-                    unitPrice: price,
-                    quantity: 1,
-                    price: price,
-                    purchased: false
-                };
-                
-                items.push(newItem);
+                // ניקוי זמני של ספריית הגרירה כדי למנוע השהייה
+                if (sortableInstance) sortableInstance.destroy();
+
+                items.push({ id: Date.now(), name, unitPrice: price, quantity: 1, price: price, purchased: false });
                 saveItems();
                 
-                // ניקוי שדות וסגירת טופס
-                nInput.value = '';
-                pInput.value = '';
+                document.getElementById('itemName').value = '';
+                document.getElementById('itemPrice').value = '';
                 hideInputForm();
                 
-                // רענון מיידי של הרשימה
                 renderItems();
             }
         }
@@ -159,13 +139,12 @@
                 empty.style.display = 'block';
             } else {
                 empty.style.display = 'none';
-                const html = items.map((item, index) => `
-                    <div class="item-card bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-3 items-center" data-id="${item.id}">
+                list.innerHTML = items.map((item, index) => `
+                    <div class="item-card bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex gap-3 items-center ${!isLocked ? 'edit-mode' : ''}" data-id="${item.id}">
                         <div class="drag-handle p-1 text-gray-300">
                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M7 7h2v2H7V7zm0 4h2v2H7v-2zm4-4h2v2h-2V7zm0 4h2v2h-2v-2zM7 3h2v2H7V3zm4 0h2v2h-2V3zm0 8h2v2h-2v-2zm0 4h2v2h-2v-2zM7 15h2v2H7v-2z"></path></svg>
                         </div>
-                        <input type="checkbox" ${item.purchased ? 'checked' : ''} onchange="togglePurchased(${index})" class="w-7 h-7 rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-500">
-                        
+                        <input type="checkbox" ${item.purchased ? 'checked' : ''} onchange="togglePurchased(${index})" class="w-7 h-7 rounded-full border-gray-300 text-indigo-600">
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-start">
                                 <h3 class="font-bold text-lg truncate ${item.purchased ? 'line-through text-gray-400 font-normal' : 'text-gray-800'}">${item.name}</h3>
@@ -177,18 +156,54 @@
                                     <span class="font-bold w-6 text-center text-gray-800">${item.quantity}</span>
                                     <button onclick="changeQty(${index}, -1)" class="w-9 h-9 bg-white rounded shadow text-red-500 font-bold">-</button>
                                 </div>
-                                <button onclick="deleteItem(${index})" class="p-2.5 bg-red-50 text-red-500 rounded-xl border border-red-100">
+                                <button onclick="deleteItem(${index})" class="p-2.5 bg-red-50 text-red-500 rounded-xl">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                                 </button>
                             </div>
                         </div>
                     </div>
                 `).join('');
-                list.innerHTML = html;
             }
-            
             updateTotals();
             if (!isLocked) initSortable();
+        }
+
+        function toggleLock() {
+            isLocked = !isLocked;
+            const btn = document.getElementById('lockBtn');
+            const icon = document.getElementById('lockIcon');
+            const status = document.getElementById('lockStatus');
+            const list = document.getElementById('itemsList');
+
+            if (isLocked) {
+                btn.className = "w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform";
+                status.textContent = "גרירה נעולה";
+                status.className = "text-xs font-bold px-2 py-1 rounded bg-gray-200 text-gray-500";
+                icon.innerHTML = '<path stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
+                if (sortableInstance) sortableInstance.destroy();
+            } else {
+                btn.className = "w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition-transform";
+                status.textContent = "גרירה פתוחה";
+                status.className = "text-xs font-bold px-2 py-1 rounded bg-orange-100 text-orange-600";
+                icon.innerHTML = '<path stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2M5 21h14a2 2 0 002-2v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2z"></path>';
+            }
+            renderItems(); // מעדכן את הנראות של הידיות
+        }
+
+        function initSortable() {
+            const el = document.getElementById('itemsList');
+            if (sortableInstance) sortableInstance.destroy();
+            sortableInstance = Sortable.create(el, {
+                animation: 150, 
+                handle: '.drag-handle',
+                onEnd: () => {
+                    let newArr = [];
+                    document.querySelectorAll('.item-card').forEach(c => {
+                        newArr.push(items.find(i => i.id == c.dataset.id));
+                    });
+                    items = newArr; saveItems();
+                }
+            });
         }
 
         function deleteItem(index) { items.splice(index, 1); saveItems(); renderItems(); }
@@ -208,52 +223,10 @@
             document.getElementById('paidPrice').textContent = paid.toFixed(2);
         }
 
-        function toggleLock() {
-            isLocked = !isLocked;
-            const btn = document.getElementById('lockBtn');
-            const icon = document.getElementById('lockIcon');
-            const status = document.getElementById('lockStatus');
-            const list = document.getElementById('itemsList');
-
-            if (isLocked) {
-                btn.classList.replace('bg-orange-500', 'bg-blue-500');
-                status.textContent = "גרירה נעולה";
-                status.className = "text-xs font-bold px-2 py-1 rounded bg-gray-200 text-gray-500";
-                icon.innerHTML = '<path stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
-                list.classList.remove('edit-mode');
-                if (window.sortable) window.sortable.destroy();
-            } else {
-                btn.classList.replace('bg-blue-500', 'bg-orange-500');
-                status.textContent = "גרירה פתוחה";
-                status.className = "text-xs font-bold px-2 py-1 rounded bg-orange-100 text-orange-600";
-                icon.innerHTML = '<path stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2M5 21h14a2 2 0 002-2v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2z"></path>';
-                list.classList.add('edit-mode');
-                initSortable();
-            }
-        }
-
-        function initSortable() {
-            const el = document.getElementById('itemsList');
-            if (window.sortable) window.sortable.destroy();
-            window.sortable = Sortable.create(el, {
-                animation: 150, handle: '.drag-handle',
-                onEnd: () => {
-                    let newArr = [];
-                    document.querySelectorAll('.item-card').forEach(c => {
-                        newArr.push(items.find(i => i.id == c.dataset.id));
-                    });
-                    items = newArr; saveItems();
-                }
-            });
-        }
-
-        function clearAllItems() { document.getElementById('confirmDialog').classList.remove('hidden'); }
-        function cancelClearAll() { document.getElementById('confirmDialog').classList.add('hidden'); }
-        function confirmClearAll() { items = []; saveItems(); renderItems(); cancelClearAll(); }
+        function clearAllItems() { if(confirm("למחוק הכל?")) { items = []; saveItems(); renderItems(); } }
 
         loadItems();
     </script>
 </body>
 </html>
-
 
