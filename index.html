@@ -207,8 +207,10 @@
             const empty = document.getElementById('emptyState');
             const clearBtn = document.getElementById('clearBtn');
 
+            // ניקוי מלא
+            list.innerHTML = '';
+
             if (items.length === 0) {
-                list.innerHTML = '';
                 empty.classList.remove('hidden');
                 clearBtn.classList.add('hidden');
                 updateTotals();
@@ -218,16 +220,19 @@
             empty.classList.add('hidden');
             clearBtn.classList.remove('hidden');
 
-            list.innerHTML = items.map(item => {
+            // יצירת אלמנטים אמיתיים במקום innerHTML
+            items.forEach(item => {
+                const div = document.createElement('div');
                 const bgClass = item.checked ? 'bg-green-50 border-green-300' : 'bg-white border-gray-100';
+                div.className = `${bgClass} border-2 rounded-2xl p-4 shadow-sm mb-3`;
+                
                 const textClass = item.checked ? 'line-through text-gray-400' : 'text-gray-800';
                 
-                return `
-                <div class="${bgClass} border-2 rounded-2xl p-4 shadow-sm">
+                div.innerHTML = `
                     <div class="flex items-center gap-3">
                         <input type="checkbox" ${item.checked ? 'checked' : ''} 
-                               onclick="toggleCheck(${item.id})"
-                               class="w-8 h-8 rounded border-2 border-gray-300 cursor-pointer">
+                               class="w-8 h-8 rounded border-2 border-gray-300 cursor-pointer"
+                               data-id="${item.id}">
                         <div class="flex-1">
                             <div class="flex justify-between items-start mb-2">
                                 <h3 class="font-bold text-xl ${textClass}">${item.name}</h3>
@@ -236,18 +241,15 @@
                             <p class="text-sm text-gray-500 mb-3 ${textClass}">(₪${item.unitPrice.toFixed(2)} × ${item.quantity})</p>
                             <div class="flex justify-between items-center">
                                 <div class="flex items-center gap-2 bg-gray-50 border-2 border-gray-200 rounded-xl p-1">
-                                    <button onclick="changeQty(${item.id}, 1)" 
-                                            class="w-12 h-12 bg-white rounded-lg shadow-sm text-green-600 font-black text-2xl active:scale-90">
+                                    <button class="btn-plus w-12 h-12 bg-white rounded-lg shadow-sm text-green-600 font-black text-2xl active:scale-90" data-id="${item.id}">
                                         +
                                     </button>
                                     <span class="font-black text-xl w-12 text-center">${item.quantity}</span>
-                                    <button onclick="changeQty(${item.id}, -1)" 
-                                            class="w-12 h-12 bg-white rounded-lg shadow-sm text-red-500 font-black text-2xl active:scale-90">
+                                    <button class="btn-minus w-12 h-12 bg-white rounded-lg shadow-sm text-red-500 font-black text-2xl active:scale-90" data-id="${item.id}">
                                         −
                                     </button>
                                 </div>
-                                <button onclick="deleteItem(${item.id})" 
-                                        class="w-14 h-14 bg-red-50 text-red-500 rounded-xl active:scale-90">
+                                <button class="btn-delete w-14 h-14 bg-red-50 text-red-500 rounded-xl active:scale-90" data-id="${item.id}">
                                     <svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
@@ -255,9 +257,23 @@
                             </div>
                         </div>
                     </div>
-                </div>
                 `;
-            }).join('');
+                
+                // הוספת event listeners
+                const checkbox = div.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', () => toggleCheck(item.id));
+                
+                const btnPlus = div.querySelector('.btn-plus');
+                btnPlus.addEventListener('click', () => changeQty(item.id, 1));
+                
+                const btnMinus = div.querySelector('.btn-minus');
+                btnMinus.addEventListener('click', () => changeQty(item.id, -1));
+                
+                const btnDelete = div.querySelector('.btn-delete');
+                btnDelete.addEventListener('click', () => deleteItem(item.id));
+                
+                list.appendChild(div);
+            });
 
             updateTotals();
         }
