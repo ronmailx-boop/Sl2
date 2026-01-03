@@ -8,6 +8,9 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#6366f1">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
@@ -88,9 +91,8 @@
         function openForm() { document.getElementById('inputForm').classList.remove('hidden'); document.getElementById('itemName').focus(); }
         function closeForm() { document.getElementById('inputForm').classList.add('hidden'); }
 
-        // פונקציות למודאל המחיקה
         function openDeleteModal() {
-            if (shoppingList.length === 0) return; // אין טעם למחוק רשימה ריקה
+            if (shoppingList.length === 0) return;
             document.getElementById('customModal').style.display = 'flex';
         }
 
@@ -204,6 +206,15 @@
                     shoppingList = newArr;
                     localStorage.setItem('LIST_FINAL_V1', JSON.stringify(shoppingList));
                 }
+            });
+        }
+
+        // רישום ה-Service Worker עבור PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('SW Registered'))
+                .catch(err => console.log('SW Error:', err));
             });
         }
 
