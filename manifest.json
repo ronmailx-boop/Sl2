@@ -1,32 +1,27 @@
 {
-  "name": "רשימת קניות (Sl2)",
-  "short_name": "קניות Sl2",
-  "description": "אפליקציה לניהול רשימת קניות - גרסה Sl2",
-  "start_url": "/Sl2/",
-  "scope": "/Sl2/",
+  "name": "רשימת הקניות שלי",
+  "short_name": "רשימת קניות",
+  "description": "אפליקציה פשוטה לניהול רשימת קניות",
+  "start_url": "https://ronmailx-boop.github.io/Sl2/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4F46E5",
+  "background_color": "#f4f7fa",
+  "theme_color": "#6366f1",
   "orientation": "portrait",
   "dir": "rtl",
   "lang": "he",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081559.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081559.png",
+      "src": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "categories": ["shopping", "lifestyle", "productivity"]
+  ]
 }
-
-
-
 
