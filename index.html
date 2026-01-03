@@ -70,21 +70,19 @@
         </div>
     </div>
 
-    <!-- Floating Action Buttons - Bottom Right -->
-    <div class="fixed bottom-6 left-6 flex flex-row-reverse gap-3 z-40">
-        <!-- כפתור הוספה - ירוק -->
-        <button onclick="showInputForm()" class="bg-green-600 hover:bg-green-700 text-white rounded-full p-5 shadow-2xl transition-all hover:scale-110">
-            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-        </button>
-        <!-- כפתור מחיקת הכל - אדום -->
-        <button id="clearAllBtn" onclick="clearAllItems()" class="bg-red-500 hover:bg-red-600 text-white rounded-full p-4 shadow-2xl transition-all hover:scale-110 hidden">
-            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-            </svg>
-        </button>
-    </div>
+    <!-- Floating Action Buttons - Bottom Corners -->
+    <!-- כפתור הוספה - ירוק - קצה ימין -->
+    <button onclick="showInputForm()" class="fixed bottom-6 right-6 bg-green-600 hover:bg-green-700 text-white rounded-full p-5 shadow-2xl transition-all hover:scale-110 z-40">
+        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+    </button>
+    <!-- כפתור מחיקת הכל - אדום - קצה שמאל -->
+    <button id="clearAllBtn" onclick="clearAllItems()" class="fixed bottom-6 left-6 bg-red-500 hover:bg-red-600 text-white rounded-full p-4 shadow-2xl transition-all hover:scale-110 z-40 hidden">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg>
+    </button>
 
     <!-- Custom Confirmation Dialog -->
     <div id="confirmDialog" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
