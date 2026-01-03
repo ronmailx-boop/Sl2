@@ -2,20 +2,16 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>רשימת הקניות שלי</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
             background: #f0f4f8;
-            padding-bottom: 250px; 
+            padding-bottom: 200px; 
             min-height: 100vh;
         }
-        .drag-handle { cursor: grab; display: none; }
-        .edit-mode .drag-handle { display: flex; }
-        .sortable-ghost { opacity: 0.2; background-color: #e0e7ff; }
         
         .bottom-bar {
             position: fixed;
@@ -34,10 +30,7 @@
 <body class="p-4">
     <div class="max-w-2xl mx-auto">
         <div class="bg-white rounded-t-3xl shadow-sm p-6 mb-1">
-            <div class="flex justify-between items-center">
-                <h1 class="text-2xl font-bold text-gray-800 border-b-2 border-indigo-500">רשימת הקניות שלי</h1>
-                <div id="lockStatus" class="text-xs font-bold px-2 py-1 rounded bg-gray-200 text-gray-500">גרירה נעולה</div>
-            </div>
+            <h1 class="text-2xl font-bold text-gray-800 border-b-2 border-indigo-500">רשימת הקניות שלי</h1>
         </div>
 
         <div id="inputForm" class="bg-white p-6 border-b hidden mb-4 shadow-md rounded-xl">
@@ -45,14 +38,14 @@
                 <input type="text" id="itemName" placeholder="שם המוצר" class="w-full p-3 border rounded-lg outline-none">
                 <input type="number" id="itemPrice" placeholder="מחיר ליחידה" step="0.01" class="w-full p-3 border rounded-lg outline-none">
                 <div class="flex gap-2 text-white">
-                    <button onclick="addItem()" class="flex-1 bg-green-600 py-3 rounded-lg font-bold">הוסף מוצר</button>
-                    <button onclick="hideInputForm()" class="flex-1 bg-gray-400 py-3 rounded-lg font-bold">ביטול</button>
+                    <button id="addBtn" class="flex-1 bg-green-600 py-3 rounded-lg font-bold">הוסף מוצר</button>
+                    <button id="cancelBtn" class="flex-1 bg-gray-400 py-3 rounded-lg font-bold">ביטול</button>
                 </div>
             </div>
         </div>
 
-        <div id="emptyState" class="bg-white p-12 text-center text-gray-400 rounded-b-xl shadow-sm hidden">
-            הרשימה ריקה.
+        <div id="emptyState" class="bg-white p-12 text-center text-gray-400 rounded-b-xl shadow-sm">
+            הרשימה ריקה. לחץ על + להוספת מוצר.
         </div>
         
         <div id="itemsList" class="space-y-3 mt-4"></div>
@@ -71,17 +64,13 @@
                 </div>
             </div>
 
-            <div class="flex justify-between items-center px-2">
-                <button onclick="clearAllItems()" class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center shadow-lg active:scale-95">
+            <div class="flex justify-center items-center gap-4 px-2">
+                <button id="clearBtn" class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center shadow-lg active:scale-95">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
                 </button>
 
-                <button onclick="showInputForm()" class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-xl -mt-10 border-4 border-indigo-600 active:scale-95">
+                <button id="showFormBtn" class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-xl -mt-10 border-4 border-indigo-600 active:scale-95">
                     <svg class="w-10 h-10 font-bold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
-                </button>
-
-                <button id="lockBtn" onclick="toggleLock()" class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg active:scale-95">
-                    <svg id="lockIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                 </button>
             </div>
         </div>
@@ -89,177 +78,202 @@
 
     <script>
         let items = [];
-        let isLocked = true;
-        let sortableInstance = null;
 
-        window.onload = function() {
+        // טעינה ראשונית
+        window.addEventListener('DOMContentLoaded', function() {
             loadItems();
-        };
+            setupEventListeners();
+        });
 
-        function loadItems() {
-            const saved = localStorage.getItem('SHOPPING_FINAL_V10');
-            items = saved ? JSON.parse(saved) : [];
-            renderItems();
-        }
-
-        function saveItems() {
-            localStorage.setItem('SHOPPING_FINAL_V10', JSON.stringify(items));
-        }
-
-        function showInputForm() {
-            document.getElementById('inputForm').classList.remove('hidden');
-            document.getElementById('itemName').focus();
-        }
-
-        function hideInputForm() {
-            document.getElementById('inputForm').classList.add('hidden');
-            document.getElementById('itemName').value = '';
-            document.getElementById('itemPrice').value = '';
-        }
-
-        function addItem() {
-            const name = document.getElementById('itemName').value.trim();
-            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
-
-            if (name) {
-                console.log('הוספת מוצר:', name, price); // דיבאג
-                
-                items.push({
-                    id: "id_" + Date.now(),
-                    name: name,
-                    unitPrice: price,
-                    quantity: 1,
-                    price: price,
-                    purchased: false
-                });
-                
-                console.log('מספר מוצרים אחרי הוספה:', items.length); // דיבאג
-                
-                saveItems();
-                
-                console.log('לפני renderItems'); // דיבאג
-                renderItems();
-                console.log('אחרי renderItems'); // דיבאג
-                
-                hideInputForm();
-            } else {
-                alert('נא להזין שם מוצר');
-            }
-        }
-
-        function renderItems() {
-            const list = document.getElementById('itemsList');
-            const empty = document.getElementById('emptyState');
-
-            if (items.length === 0) {
-                empty.classList.remove('hidden');
-                list.innerHTML = '';
-            } else {
-                empty.classList.add('hidden');
-                list.innerHTML = items.map((item, index) => {
-                    const bgClass = item.purchased ? 'bg-green-50 border-green-300' : 'bg-white';
-                    const textClass = item.purchased ? 'line-through text-gray-400' : 'text-gray-800';
-                    
-                    return `
-                    <div class="item-card ${bgClass} p-4 rounded-2xl shadow-sm border flex gap-3 items-center" data-id="${item.id}">
-                        <div class="drag-handle p-1 text-gray-300 ${!isLocked ? 'flex' : 'hidden'}">
-                            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M7 7h2v2H7V7zm0 4h2v2H7v-2zm4-4h2v2h-2V7zm0 4h2v2h-2v-2zM7 3h2v2H7V3zm4 0h2v2h-2V3zm0 8h2v2h-2v-2zm0 4h2v2h-2v-2zM7 15h2v2H7v-2z"></path></svg>
-                        </div>
-                        <input type="checkbox" ${item.purchased ? 'checked' : ''} onchange="togglePurchased(${index})" class="w-7 h-7 rounded-full text-indigo-600 cursor-pointer">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-start">
-                                <h3 class="font-bold text-lg truncate ${textClass}">${item.name}</h3>
-                                <span class="text-indigo-600 font-black ${textClass}">₪${item.price.toFixed(2)}</span>
-                            </div>
-                            <p class="text-xs text-gray-500 ${textClass}">(${item.quantity} × ₪${item.unitPrice.toFixed(2)})</p>
-                            <div class="flex justify-between items-center mt-3">
-                                <div class="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border">
-                                    <button onclick="changeQty(${index}, -1)" class="w-9 h-9 bg-white rounded shadow text-red-500 font-bold">-</button>
-                                    <span class="font-bold w-6 text-center">${item.quantity}</span>
-                                    <button onclick="changeQty(${index}, 1)" class="w-9 h-9 bg-white rounded shadow text-green-600 font-bold">+</button>
-                                </div>
-                                <button onclick="deleteItem(${index})" class="p-2.5 bg-red-50 text-red-500 rounded-xl">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    `;
-                }).join('');
-            }
-            updateTotals();
-            if (!isLocked) initSortable();
-        }
-
-        function toggleLock() {
-            isLocked = !isLocked;
-            const btn = document.getElementById('lockBtn');
-            const icon = document.getElementById('lockIcon');
-            const status = document.getElementById('lockStatus');
-
-            if (isLocked) {
-                btn.className = "w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center shadow-lg active:scale-95";
-                status.textContent = "גרירה נעולה";
-                status.className = "text-xs font-bold px-2 py-1 rounded bg-gray-200 text-gray-500";
-                icon.innerHTML = '<path stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
-                if (sortableInstance) {
-                    sortableInstance.destroy();
-                    sortableInstance = null;
-                }
-            } else {
-                btn.className = "w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center shadow-lg active:scale-95";
-                status.textContent = "גרירה פתוחה";
-                status.className = "text-xs font-bold px-2 py-1 rounded bg-orange-100 text-orange-600";
-                icon.innerHTML = '<path stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2M5 21h14a2 2 0 002-2v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2z"></path>';
-            }
-            renderItems();
-        }
-
-        function initSortable() {
-            if (sortableInstance) sortableInstance.destroy();
+        function setupEventListeners() {
+            document.getElementById('showFormBtn').addEventListener('click', showInputForm);
+            document.getElementById('addBtn').addEventListener('click', addItem);
+            document.getElementById('cancelBtn').addEventListener('click', hideInputForm);
+            document.getElementById('clearBtn').addEventListener('click', clearAllItems);
             
-            const el = document.getElementById('itemsList');
-            sortableInstance = Sortable.create(el, {
-                animation: 150,
-                handle: '.drag-handle',
-                ghostClass: 'sortable-ghost',
-                onEnd: function() {
-                    let newArr = [];
-                    document.querySelectorAll('.item-card').forEach(card => {
-                        const foundItem = items.find(i => i.id === card.dataset.id);
-                        if (foundItem) newArr.push(foundItem);
-                    });
-                    items = newArr;
-                    saveItems();
+            document.getElementById('itemName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    document.getElementById('itemPrice').focus();
+                }
+            });
+            
+            document.getElementById('itemPrice').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addItem();
                 }
             });
         }
 
-        function togglePurchased(index) {
-            items[index].purchased = !items[index].purchased;
+        function loadItems() {
+            try {
+                const saved = localStorage.getItem('SHOPPING_LIST_V11');
+                if (saved) {
+                    items = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error('שגיאה בטעינה:', e);
+                items = [];
+            }
+            renderItems();
+        }
+
+        function saveItems() {
+            try {
+                localStorage.setItem('SHOPPING_LIST_V11', JSON.stringify(items));
+                console.log('נשמר בהצלחה:', items.length, 'מוצרים');
+            } catch (e) {
+                console.error('שגיאה בשמירה:', e);
+            }
+        }
+
+        function showInputForm() {
+            document.getElementById('inputForm').classList.remove('hidden');
+            document.getElementById('itemName').value = '';
+            document.getElementById('itemPrice').value = '';
+            setTimeout(() => {
+                document.getElementById('itemName').focus();
+            }, 100);
+        }
+
+        function hideInputForm() {
+            document.getElementById('inputForm').classList.add('hidden');
+        }
+
+        function addItem() {
+            const nameInput = document.getElementById('itemName');
+            const priceInput = document.getElementById('itemPrice');
+            
+            const name = nameInput.value.trim();
+            const price = parseFloat(priceInput.value) || 0;
+
+            console.log('מוסיף מוצר:', name, price);
+
+            if (!name) {
+                alert('נא להזין שם מוצר');
+                nameInput.focus();
+                return;
+            }
+
+            const newItem = {
+                id: "item_" + Date.now() + "_" + Math.random(),
+                name: name,
+                unitPrice: price,
+                quantity: 1,
+                price: price,
+                purchased: false
+            };
+
+            items.push(newItem);
+            console.log('סה"כ מוצרים עכשיו:', items.length);
+
             saveItems();
             renderItems();
+            hideInputForm();
+            
+            console.log('סיימתי להוסיף מוצר');
+        }
+
+        function renderItems() {
+            console.log('renderItems התחיל. מספר מוצרים:', items.length);
+            
+            const list = document.getElementById('itemsList');
+            const empty = document.getElementById('emptyState');
+
+            if (!items || items.length === 0) {
+                empty.classList.remove('hidden');
+                list.innerHTML = '';
+                list.classList.add('hidden');
+                updateTotals();
+                return;
+            }
+
+            empty.classList.add('hidden');
+            list.classList.remove('hidden');
+
+            let html = '';
+            
+            items.forEach((item, index) => {
+                const bgClass = item.purchased ? 'bg-green-50 border-green-300' : 'bg-white border-gray-200';
+                const textClass = item.purchased ? 'line-through text-gray-400' : 'text-gray-800';
+                
+                html += `
+                <div class="${bgClass} p-4 rounded-2xl shadow-sm border-2 transition-all">
+                    <div class="flex gap-3 items-start">
+                        <input type="checkbox" 
+                               ${item.purchased ? 'checked' : ''} 
+                               onchange="togglePurchased(${index})" 
+                               class="w-7 h-7 rounded text-indigo-600 cursor-pointer mt-1">
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-lg ${textClass}">${item.name}</h3>
+                                <span class="text-indigo-600 font-black text-xl ${textClass}">₪${item.price.toFixed(2)}</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-3 ${textClass}">(${item.quantity} × ₪${item.unitPrice.toFixed(2)})</p>
+                            <div class="flex justify-between items-center">
+                                <div class="flex items-center gap-2 bg-gray-50 p-1 rounded-lg border">
+                                    <button onclick="changeQty(${index}, -1)" 
+                                            class="w-9 h-9 bg-white rounded shadow text-red-500 font-bold active:bg-gray-100">
+                                        -
+                                    </button>
+                                    <span class="font-bold w-8 text-center">${item.quantity}</span>
+                                    <button onclick="changeQty(${index}, 1)" 
+                                            class="w-9 h-9 bg-white rounded shadow text-green-600 font-bold active:bg-gray-100">
+                                        +
+                                    </button>
+                                </div>
+                                <button onclick="deleteItem(${index})" 
+                                        class="p-2.5 bg-red-50 text-red-500 rounded-xl active:bg-red-100">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `;
+            });
+
+            list.innerHTML = html;
+            updateTotals();
+            
+            console.log('renderItems הסתיים. HTML אורך:', html.length);
+        }
+
+        function togglePurchased(index) {
+            if (items[index]) {
+                items[index].purchased = !items[index].purchased;
+                saveItems();
+                renderItems();
+            }
         }
 
         function deleteItem(index) {
-            items.splice(index, 1);
-            saveItems();
-            renderItems();
+            if (confirm('למחוק את המוצר?')) {
+                items.splice(index, 1);
+                saveItems();
+                renderItems();
+            }
         }
 
         function changeQty(index, delta) {
+            if (!items[index]) return;
+            
             const newQty = items[index].quantity + delta;
             if (newQty >= 1) {
                 items[index].quantity = newQty;
-                items[index].price = items[index].unitPrice * items[index].quantity;
+                items[index].price = items[index].unitPrice * newQty;
                 saveItems();
                 renderItems();
             }
         }
 
         function updateTotals() {
-            const total = items.reduce((sum, item) => sum + item.price, 0);
-            const paid = items.filter(item => item.purchased).reduce((sum, item) => sum + item.price, 0);
+            const total = items.reduce((sum, item) => sum + (item.price || 0), 0);
+            const paid = items.filter(item => item.purchased).reduce((sum, item) => sum + (item.price || 0), 0);
+            
             document.getElementById('totalPrice').textContent = total.toFixed(2);
             document.getElementById('paidPrice').textContent = paid.toFixed(2);
         }
@@ -271,21 +285,6 @@
                 renderItems();
             }
         }
-
-        // Enter key support
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('itemName').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    document.getElementById('itemPrice').focus();
-                }
-            });
-
-            document.getElementById('itemPrice').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    addItem();
-                }
-            });
-        });
     </script>
 </body>
 </html>
