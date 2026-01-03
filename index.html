@@ -12,9 +12,11 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         }
-        /* תיקון למרכוז הדיאלוג */
-        #confirmDialog.active {
+        /* הבטחת מרכוז מוחלט של הדיאלוג */
+        #confirmDialog.flex {
             display: flex !important;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 </head>
@@ -46,7 +48,7 @@
             </div>
         </div>
 
-        <div class="bg-white shadow-lg p-6">
+        <div class="bg-white shadow-lg p-6 min-h-[200px]">
             <div id="emptyState" class="text-center py-12 text-gray-400">
                 <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
@@ -94,161 +96,12 @@
         </svg>
     </button>
 
-    <div id="confirmDialog" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+    <div id="confirmDialog" class="fixed inset-0 bg-black/60 hidden z-50 p-4">
         <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full">
             <div class="text-center">
                 <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                     <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-                    </svg>
-                </div>
-                <h3 class="text-lg font-bold text-gray-900 mb-2">מחיקת הרשימה</h3>
-                <p class="text-gray-600 mb-6">האם אתה בטוח שברצונך למחוק את כל הרשימה?</p>
-                <div class="flex gap-3">
-                    <button onclick="confirmClearAll()" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-3 rounded-lg font-medium transition-colors">מחק הכל</button>
-                    <button onclick="cancelClearAll()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-medium transition-colors">ביטול</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let items = [];
-
-        function loadItems() {
-            const saved = localStorage.getItem('shoppingList');
-            if (saved) {
-                items = JSON.parse(saved);
-                renderItems();
-            }
-        }
-
-        function saveItems() {
-            localStorage.setItem('shoppingList', JSON.stringify(items));
-        }
-
-        function showInputForm() {
-            document.getElementById('inputForm').classList.remove('hidden');
-            document.getElementById('itemName').focus();
-        }
-
-        function hideInputForm() {
-            document.getElementById('inputForm').classList.add('hidden');
-            document.getElementById('itemName').value = '';
-            document.getElementById('itemPrice').value = '';
-        }
-
-        function addItem() {
-            const name = document.getElementById('itemName').value.trim();
-            const price = parseFloat(document.getElementById('itemPrice').value) || 0;
-
-            if (name) {
-                items.push({
-                    id: Date.now(),
-                    name: name,
-                    unitPrice: price,
-                    quantity: 1,
-                    price: price,
-                    purchased: false
-                });
-                saveItems();
-                renderItems();
-                hideInputForm();
-            }
-        }
-
-        function deleteItem(index) {
-            items.splice(index, 1);
-            saveItems();
-            renderItems();
-        }
-
-        function moveItemUp(index) {
-            if (index === 0) return;
-            [items[index - 1], items[index]] = [items[index], items[index - 1]];
-            saveItems();
-            renderItems();
-        }
-
-        function moveItemDown(index) {
-            if (index === items.length - 1) return;
-            [items[index], items[index + 1]] = [items[index + 1], items[index]];
-            saveItems();
-            renderItems();
-        }
-
-        function increaseQuantity(index) {
-            items[index].quantity++;
-            items[index].price = items[index].unitPrice * items[index].quantity;
-            saveItems();
-            renderItems();
-        }
-
-        function decreaseQuantity(index) {
-            if (items[index].quantity > 1) {
-                items[index].quantity--;
-                items[index].price = items[index].unitPrice * items[index].quantity;
-                saveItems();
-                renderItems();
-            }
-        }
-
-        function togglePurchased(index) {
-            items[index].purchased = !items[index].purchased;
-            saveItems();
-            renderItems();
-        }
-
-        function clearAllItems() {
-            const dialog = document.getElementById('confirmDialog');
-            dialog.classList.remove('hidden');
-            dialog.classList.add('active');
-        }
-
-        function confirmClearAll() {
-            items = [];
-            saveItems();
-            renderItems();
-            cancelClearAll();
-        }
-
-        function cancelClearAll() {
-            const dialog = document.getElementById('confirmDialog');
-            dialog.classList.add('hidden');
-            dialog.classList.remove('active');
-        }
-
-        function renderItems() {
-            const emptyState = document.getElementById('emptyState');
-            const itemsList = document.getElementById('itemsList');
-            const totalSection = document.getElementById('totalSection');
-            const clearAllBtn = document.getElementById('clearAllBtn');
-
-            if (items.length === 0) {
-                emptyState.classList.remove('hidden');
-                itemsList.classList.add('hidden');
-                totalSection.classList.add('hidden');
-                clearAllBtn.classList.add('hidden');
-                return;
-            }
-
-            emptyState.classList.add('hidden');
-            itemsList.classList.remove('hidden');
-            totalSection.classList.remove('hidden');
-            clearAllBtn.classList.remove('hidden');
-
-            let html = '';
-            items.forEach((item, index) => {
-                const bgClass = item.purchased ? 'bg-green-100 border-2 border-green-400' : 'bg-gray-50 border border-gray-200';
-                const textClass = item.purchased ? 'line-through opacity-60' : '';
-                
-                html += `
-                    <div class="${bgClass} p-4 rounded-xl transition-all">
-                        <div class="flex items-start gap-3 w-full">
-                            <label class="flex items-center cursor-pointer mt-1">
-                                <input type="checkbox" ${item.purchased ? 'checked' : ''} onchange="togglePurchased(${index})" class="w-6 h-6 text-green-600 bg-white border-gray-300 rounded focus:ring-green-500 cursor-pointer">
-                            </label>
-                            
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1
                             <div class="flex-1 min-w-0">
                                 <div class="flex flex-col sm:flex-row sm:justify-between gap-2">
                                     <div>
@@ -313,3 +166,4 @@
     </script>
 </body>
 </html>
+
