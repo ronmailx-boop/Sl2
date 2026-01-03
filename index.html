@@ -156,18 +156,12 @@
 
             saveData();
             
-            // רינדור מיידי
-            render();
-            
-            // רינדור נוסף אחרי עיכוב קטן
-            setTimeout(() => {
-                render();
-            }, 100);
-            
-            // רינדור שלישי אחרי עיכוב יותר ארוך
-            setTimeout(() => {
-                render();
-            }, 300);
+            // שימוש ב-requestAnimationFrame לעדכון חלק
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    render();
+                });
+            });
             
             hideForm();
         }
