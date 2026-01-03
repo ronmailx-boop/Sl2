@@ -9,92 +9,81 @@
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-            /* הוספת ריווח בתחתית כדי שהכפתורים לא יסתירו את המחיר */
-            padding-bottom: 180px; 
+            /* ריווח ענק למטה כדי ששום דבר לא יוסתר */
+            padding-bottom: 250px; 
+            background: #f0f4f8;
         }
         .floating-btn {
             position: fixed !important;
-            z-index: 9999 !important;
-            cursor: pointer !important;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            transition: all 0.2s;
+            z-index: 100;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
         }
-        .floating-btn:active { transform: scale(0.9); }
-        .sortable-ghost { opacity: 0.3; background-color: #f3f4f6 !important; }
+        /* ידית גרירה */
         .drag-handle { cursor: grab; display: none; }
-        .edit-mode .drag-handle { display: flex; }
-        #confirmDialog.active { display: flex !important; }
-        
-        /* עיצוב שורת הסיכום שתמיד תהיה גלויה */
-        #totalSection {
-            position: relative;
-            z-index: 10;
-        }
+        .edit-mode .drag-handle { display: block; }
+        .sortable-ghost { opacity: 0.2; }
     </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+<body class="p-4">
     <div class="max-w-2xl mx-auto">
-        <div class="bg-white rounded-t-3xl shadow-lg p-6">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
-                    <h1 class="text-2xl font-bold text-gray-800">רשימת הקניות</h1>
-                </div>
-                <div id="lockStatusTag" class="text-xs font-bold px-2 py-1 rounded bg-gray-200 text-gray-600 transition-colors">גרירה נעולה</div>
+        <div class="bg-white rounded-t-3xl shadow-sm p-6 mb-1">
+            <div class="flex justify-between items-center">
+                <h1 class="text-2xl font-bold text-gray-800">רשימת הקניות שלי</h1>
+                <div id="lockStatus" class="text-xs font-bold px-2 py-1 rounded bg-gray-200 text-gray-500">גרירה נעולה</div>
             </div>
         </div>
 
-        <div id="inputForm" class="bg-white shadow-lg p-6 border-t border-gray-200 hidden">
-            <div class="space-y-4">
-                <input type="text" id="itemName" placeholder="שם מוצר..." class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-                <input type="number" id="itemPrice" placeholder="מחיר ליחידה..." step="0.01" class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500">
-                <div class="flex gap-3">
-                    <button onclick="addItem()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-medium">הוסף</button>
-                    <button onclick="hideInputForm()" class="flex-1 bg-gray-300 text-gray-800 py-3 rounded-lg font-medium">ביטול</button>
+        <div id="inputForm" class="bg-white p-6 border-b hidden mb-4 shadow-md rounded-xl">
+            <div class="space-y-3">
+                <input type="text" id="itemName" placeholder="שם המוצר" class="w-full p-3 border rounded-lg">
+                <input type="number" id="itemPrice" placeholder="מחיר ליחידה" class="w-full p-3 border rounded-lg">
+                <div class="flex gap-2">
+                    <button onclick="addItem()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold">הוסף מוצר</button>
+                    <button onclick="hideInputForm()" class="flex-1 bg-gray-300 py-3 rounded-lg">ביטול</button>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white shadow-lg p-6 min-h-[150px]">
-            <div id="emptyState" class="text-center py-12 text-gray-400">
-                <p class="text-lg">הרשימה ריקה</p>
-            </div>
-            <div id="itemsList" class="space-y-4 hidden"></div>
+        <div id="emptyState" class="bg-white p-12 text-center text-gray-400 rounded-b-xl shadow-sm">
+            הרשימה ריקה
         </div>
+        <div id="itemsList" class="space-y-3 mb-6"></div>
 
-        <div id="totalSection" class="bg-gradient-to-r from-indigo-700 to-purple-700 rounded-b-3xl shadow-2xl p-6 text-white hidden">
-            <div class="grid grid-cols-2 gap-4">
-                <div><p class="text-sm opacity-80">עדיין לקנות:</p><p class="text-2xl font-bold">₪<span id="remainingPrice">0.00</span></p></div>
-                <div class="text-left"><p class="text-sm opacity-80">סה"כ לתשלום:</p><p class="text-2xl font-bold">₪<span id="totalPrice">0.00</span></p></div>
+        <div id="totalSection" class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-xl hidden">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-sm opacity-80">סה"כ לתשלום:</p>
+                    <p class="text-3xl font-black">₪<span id="totalPrice">0.00</span></p>
+                </div>
+                <div class="text-left">
+                    <p class="text-sm opacity-80">עדיין לקנות:</p>
+                    <p class="text-xl font-bold text-orange-200">₪<span id="remainingPrice">0.00</span></p>
+                </div>
             </div>
         </div>
     </div>
 
-    <button onclick="showInputForm()" class="floating-btn bg-green-600 text-white rounded-full w-16 h-16" style="bottom: 20px; right: 20px;">
-        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-    </button>
+    <div class="fixed bottom-8 left-0 right-0 flex justify-center items-center gap-6 px-4 pointer-events-none z-[200]">
+        <button id="clearAllBtn" onclick="clearAllItems()" class="floating-btn pointer-events-auto bg-red-500 text-white rounded-full w-14 h-14 hidden">
+            <svg class="w-7 h-7 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+        </button>
+        
+        <button id="lockBtn" onclick="toggleLock()" class="floating-btn pointer-events-auto bg-blue-600 text-white rounded-full w-16 h-16">
+            <svg id="lockIcon" class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        </button>
 
-    <button id="lockBtn" onclick="toggleLock()" class="floating-btn bg-blue-600 text-white rounded-full w-14 h-14" style="bottom: 25px; right: 95px;">
-        <svg id="lockIcon" class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-        </svg>
-    </button>
+        <button onclick="showInputForm()" class="floating-btn pointer-events-auto bg-green-600 text-white rounded-full w-20 h-20">
+            <svg class="w-10 h-10 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        </button>
+    </div>
 
-    <button id="clearAllBtn" onclick="clearAllItems()" class="floating-btn bg-red-500 text-white rounded-full w-12 h-12 hidden" style="bottom: 30px; right: 160px;">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-    </button>
-
-    <div id="confirmDialog" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-[10000] p-4">
-        <div class="bg-white rounded-2xl p-6 max-w-sm w-full text-center">
-            <h3 class="text-lg font-bold mb-4">מחיקת כל הרשימה?</h3>
-            <div class="flex gap-3">
+    <div id="confirmDialog" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-[300] p-4">
+        <div class="bg-white p-6 rounded-2xl w-full max-w-xs text-center">
+            <p class="text-xl font-bold mb-4">למחוק את כל הרשימה?</p>
+            <div class="flex gap-2">
                 <button onclick="confirmClearAll()" class="flex-1 bg-red-600 text-white py-3 rounded-lg">מחק</button>
-                <button onclick="cancelClearAll()" class="flex-1 bg-gray-200 text-gray-800 py-3 rounded-lg">ביטול</button>
+                <button onclick="cancelClearAll()" class="flex-1 bg-gray-200 py-3 rounded-lg">ביטול</button>
             </div>
         </div>
     </div>
@@ -103,55 +92,13 @@
         let items = [];
         let isLocked = true;
 
-        function initSortable() {
-            const el = document.getElementById('itemsList');
-            if (window.sortableInstance) window.sortableInstance.destroy();
-            window.sortableInstance = Sortable.create(el, {
-                animation: 150,
-                handle: '.drag-handle',
-                disabled: isLocked,
-                onEnd: function() {
-                    let newOrder = [];
-                    document.querySelectorAll('.item-card').forEach(card => {
-                        const id = card.getAttribute('data-id');
-                        const item = items.find(i => i.id == id);
-                        if (item) newOrder.push(item);
-                    });
-                    items = newOrder;
-                    saveItems();
-                }
-            });
-        }
-
-        function toggleLock() {
-            isLocked = !isLocked;
-            const btn = document.getElementById('lockBtn');
-            const icon = document.getElementById('lockIcon');
-            const list = document.getElementById('itemsList');
-            const tag = document.getElementById('lockStatusTag');
-
-            if (isLocked) {
-                btn.classList.replace('bg-orange-500', 'bg-blue-600');
-                tag.textContent = "גרירה נעולה";
-                tag.className = "text-xs font-bold px-2 py-1 rounded bg-gray-200 text-gray-600";
-                icon.innerHTML = '<path stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
-                list.classList.remove('edit-mode');
-            } else {
-                btn.classList.replace('bg-blue-600', 'bg-orange-500');
-                tag.textContent = "מצב עריכה פעיל";
-                tag.className = "text-xs font-bold px-2 py-1 rounded bg-orange-100 text-orange-600";
-                icon.innerHTML = '<path stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2M5 21h14a2 2 0 002-2v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2z"></path>';
-                list.classList.add('edit-mode');
-            }
-            initSortable();
-        }
-
         function loadItems() {
-            const saved = localStorage.getItem('shoppingList');
+            const saved = localStorage.getItem('list');
             if (saved) { items = JSON.parse(saved); renderItems(); }
         }
-        function saveItems() { localStorage.setItem('shoppingList', JSON.stringify(items)); }
-        function showInputForm() { document.getElementById('inputForm').classList.remove('hidden'); }
+        function saveItems() { localStorage.setItem('list', JSON.stringify(items)); }
+
+        function showInputForm() { document.getElementById('inputForm').classList.toggle('hidden'); }
         function hideInputForm() { document.getElementById('inputForm').classList.add('hidden'); }
 
         function addItem() {
@@ -174,65 +121,98 @@
             }
         }
 
-        function clearAllItems() { document.getElementById('confirmDialog').classList.add('active'); }
-        function cancelClearAll() { document.getElementById('confirmDialog').classList.remove('active'); }
+        function toggleLock() {
+            isLocked = !isLocked;
+            const btn = document.getElementById('lockBtn');
+            const icon = document.getElementById('lockIcon');
+            const status = document.getElementById('lockStatus');
+            const list = document.getElementById('itemsList');
+
+            if (isLocked) {
+                btn.classList.replace('bg-orange-500', 'bg-blue-600');
+                status.textContent = "גרירה נעולה";
+                status.className = "text-xs font-bold px-2 py-1 rounded bg-gray-200 text-gray-500";
+                icon.innerHTML = '<path stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>';
+                list.classList.remove('edit-mode');
+            } else {
+                btn.classList.replace('bg-blue-600', 'bg-orange-500');
+                status.textContent = "גרירה פתוחה";
+                status.className = "text-xs font-bold px-2 py-1 rounded bg-orange-100 text-orange-600";
+                icon.innerHTML = '<path stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2M5 21h14a2 2 0 002-2v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2z"></path>';
+                list.classList.add('edit-mode');
+            }
+            initSortable();
+        }
+
+        function initSortable() {
+            const el = document.getElementById('itemsList');
+            if (window.sortable) window.sortable.destroy();
+            window.sortable = Sortable.create(el, {
+                animation: 150, handle: '.drag-handle', disabled: isLocked,
+                onEnd: () => {
+                    let newArr = [];
+                    document.querySelectorAll('.item-card').forEach(c => {
+                        newArr.push(items.find(i => i.id == c.dataset.id));
+                    });
+                    items = newArr; saveItems();
+                }
+            });
+        }
+
+        function clearAllItems() { document.getElementById('confirmDialog').classList.remove('hidden'); }
+        function cancelClearAll() { document.getElementById('confirmDialog').classList.add('hidden'); }
         function confirmClearAll() { items = []; saveItems(); renderItems(); cancelClearAll(); }
 
         function renderItems() {
             const list = document.getElementById('itemsList');
+            const empty = document.getElementById('emptyState');
             const totalSec = document.getElementById('totalSection');
             const clearBtn = document.getElementById('clearAllBtn');
-            const empty = document.getElementById('emptyState');
 
             if (items.length === 0) {
-                list.classList.add('hidden'); totalSec.classList.add('hidden'); 
-                clearBtn.classList.add('hidden'); empty.classList.remove('hidden');
+                list.classList.add('hidden'); empty.classList.remove('hidden');
+                totalSec.classList.add('hidden'); clearBtn.classList.add('hidden');
                 return;
             }
 
-            empty.classList.add('hidden'); list.classList.remove('hidden'); 
+            empty.classList.add('hidden'); list.classList.remove('hidden');
             totalSec.classList.remove('hidden'); clearBtn.classList.remove('hidden');
 
             list.innerHTML = items.map((item, index) => `
-                <div class="item-card p-4 rounded-xl border bg-white shadow-sm border-gray-200" data-id="${item.id}">
+                <div class="item-card bg-white p-4 rounded-2xl shadow-sm border border-gray-100" data-id="${item.id}">
                     <div class="flex items-start gap-3">
-                        <div class="drag-handle p-1 text-gray-400">
+                        <div class="drag-handle p-1 text-gray-300">
                             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M7 7h2v2H7V7zm0 4h2v2H7v-2zm4-4h2v2h-2V7zm0 4h2v2h-2v-2zM7 3h2v2H7V3zm4 0h2v2h-2V3zm0 8h2v2h-2v-2zm0 4h2v2h-2v-2zM7 15h2v2H7v-2z"></path></svg>
                         </div>
-                        <input type="checkbox" ${item.purchased ? 'checked' : ''} onchange="togglePurchased(${index})" class="w-6 h-6 mt-1">
+                        <input type="checkbox" ${item.purchased ? 'checked' : ''} onchange="togglePurchased(${index})" class="w-6 h-6 mt-1 rounded-full border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        
                         <div class="flex-1 min-w-0">
                             <div class="flex justify-between items-start mb-1">
-                                <h3 class="font-bold text-lg truncate ${item.purchased ? 'line-through opacity-50' : ''}">${item.name}</h3>
-                                <span class="text-indigo-600 font-bold">₪${item.price.toFixed(2)}</span>
+                                <h3 class="font-bold text-lg truncate ${item.purchased ? 'line-through text-gray-400' : 'text-gray-800'}">${item.name}</h3>
+                                <span class="text-indigo-600 font-black text-xl">₪${item.price.toFixed(2)}</span>
                             </div>
-                            <p class="text-xs text-gray-500 mb-3">${item.quantity} יח' × ₪${item.unitPrice.toFixed(2)}</p>
+                            <p class="text-xs text-gray-400 mb-4">${item.quantity} יח' × ₪${item.unitPrice.toFixed(2)}</p>
                             
-                            <div class="grid grid-cols-3 items-center border-t pt-3 gap-2">
-                                <div></div>
-                                <div class="flex justify-center">
-                                    <div class="flex items-center gap-2 bg-gray-50 border rounded-lg px-2 py-1 shadow-inner">
-                                        <button onclick="changeQty(${index}, -1)" class="text-red-500 font-bold text-xl px-2">-</button>
-                                        <span class="font-bold w-6 text-center text-gray-800">${item.quantity}</span>
-                                        <button onclick="changeQty(${index}, 1)" class="text-green-600 font-bold text-xl px-2">+</button>
-                                    </div>
+                            <div class="flex justify-between items-center border-t pt-3">
+                                <div class="flex items-center gap-3 bg-gray-50 p-1 rounded-xl border">
+                                    <button onclick="changeQty(${index}, 1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg text-green-600 font-bold shadow-sm">+</button>
+                                    <span class="font-bold w-4 text-center text-gray-700">${item.quantity}</span>
+                                    <button onclick="changeQty(${index}, -1)" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg text-red-500 font-bold shadow-sm">-</button>
                                 </div>
-                                <div class="flex justify-end pr-4">
-                                    <button onclick="deleteItem(${index})" class="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
-                                </div>
+
+                                <button onclick="deleteItem(${index})" class="p-2.5 bg-red-100 text-red-600 rounded-xl hover:bg-red-200 transition-colors">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             `).join('');
-
             initSortable();
-
             const total = items.reduce((s, i) => s + i.price, 0);
             document.getElementById('totalPrice').textContent = total.toFixed(2);
-            const paid = items.filter(i => i.purchased).reduce((s, i) => s + i.price, 0);
-            document.getElementById('remainingPrice').textContent = (total - paid).toFixed(2);
+            const rem = items.filter(i => !i.purchased).reduce((s, i) => s + i.price, 0);
+            document.getElementById('remainingPrice').textContent = rem.toFixed(2);
         }
         loadItems();
     </script>
